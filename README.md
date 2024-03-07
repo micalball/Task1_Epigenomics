@@ -85,7 +85,7 @@ The next step is to convert bigBed files format into bed files, using bigBedToBe
 cut -f1 analyses/bigBed.peaks.ids.txt | while read filename; do bigBedToBed data/bigBed.files/"$filename".bigBed data/bed.files/"$filename".bed; done
 ```
 Now, we were provided the list of promoters ([-2 kb, +2 Kb] from TSS) of protein-coding genes and we stored this file inside the annotation folder with the name /gencode.v24.protein.coding.non.redundant.TSS.bed. Following this line of code we'll conduct intersection analyses for both tissues. We'll extract the first two columns from the data, where the first column represents the filename and the second column represents the tissue. These values will be used to calculate the intersection and the results will be stored in a text file with the tissue name.
-To obtain the number of peaks the command wc -l will be used too.
+To obtain the number of peaks intersecting promoter regions the command wc -l will be used.
 ```bash
  cut -f-2 analyses/bigBed.peaks.ids.txt | while read filename tissue; do bedtools intersect -a data/bed.files/"$filename".bed -b annotation/gencode.v24.protein.coding.non.redundant.TSS.bed -u | sort -u > analyses/peaks.analyses/ATACpeaks.within.promoters."$tissue".txt; done
 root@97de1c55167d:/home/micalball/epigenomics/epigenomics_uvic/ATAC-seq# wc -l analyses/peaks.analyses/*.txt
@@ -93,14 +93,23 @@ root@97de1c55167d:/home/micalball/epigenomics/epigenomics_uvic/ATAC-seq# wc -l a
   44749 analyses/peaks.analyses/ATACpeaks.within.promoters.stomach.txt
   92620 total
 ```
-
-
-
-
+As can be seen above, we found a total of 92620 peaks inside promoter regions, with 47871 corresponding to sigmoid colon and 44749 to stomach.
+Now, we are going to repeat the same step but selecting the peaks in the BED file that do not intersect with the protein-coding gene body regions and we will save the results into separate files for each tissue.
 
 ```bash
-
+cut -f-2 analyses/bigBed.peaks.ids.txt | while read filename tissue; do bedtools intersect -a data/bed.files/"$filename".bed -b annotation/gencode.v24.protein.coding.gene.body.bed -v | sort -u > analyses/peaks.analysis/ATACpeaks.outside.gene."$tissue".bed; done
+root@97de1c55167d:/home/micalball/epigenomics/epigenomics_uvic/ATAC-seq# wc -l analyses/peaks.analyses/*.bed
+  37035 analyses/peaks.analyses/ATACpeaks.outside.gene.sigmoid_colon.bed
+  34537 analyses/peaks.analyses/ATACpeaks.outside.gene.stomach.bed
+  71572 total
 ```
+In this case, we found 71572 peaks outside gene coordinates with 34537 for stomach and 37035 peaks for sigmoid colon tissue.
+
+
+
+## TASK 5
+
+
 ```bash
 
 ```
