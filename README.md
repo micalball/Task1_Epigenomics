@@ -66,17 +66,52 @@ file_type="bigBed"; ../bin/selectRows.sh <(cut -f1 analyses/"$file_type".*.ids.t
 ```
 Since no output was obtained we can conclude that the are no differences between the files, they have a correct integrity and are verified.
 
+### Task 3
+For each tissue, run an intersection analysis using BEDTools: report 1) the number of peaks that intersect promoter regions, 2) the number of peaks that fall outside gene coordinates (whole gene body, not just the promoter regions). Hint: have a look at what we did here and here.
+
+We will start by dowloading the gencode.v24.primary_assembly.annotation file and unncompress the gtf.gz file:
+```bash
+wget -P annotation "https://www.encodeproject.org/files/gencode.v24.primary_assembly.annotation/@@download/gencode.v24.primary_assembly.annotation.gtf.gz"
+gunzip annotation/gencode.v24.primary_assembly.annotation.gtf.gz
+```
+
+Now it's time to convert the gtf annotation file to a BED format. Specifically, we will retrieve gene body coordinates of protein-coding genes (chr, start, end, strand), remove mitochondrial genes (i.e. those located on chrM) and move from a 1-based to a 0-based coordinate system.
+
+```bash
+awk '$3=="gene"' annotation/gencode.v24.primary_assembly.annotation.gtf | grep -F "protein_coding" | cut -d ";" -f1 | awk 'BEGIN{OFS="\t"}{print $1, $4, $5, $10, 0, $7, $10}' | sed 's/\"//g' | awk 'BEGIN{FS=OFS="\t"}$1!="chrM"{$2=($2-1); print $0}' > annotation/gencode.v24.protein.coding.gene.body.bed
+```
+The next step is to convert bigBed files format into bed files, using bigBedToBed as follows:
+```bash
+cut -f1 analyses/bigBed.peaks.ids.txt | while read filename; do bigBedToBed data/bigBed.files/"$filename".bigBed data/bed.files/"$filename".bed; done
+```
+Now, we were provided the list of promoters ([-2 kb, +2 Kb] from TSS) of protein-coding genes and we stored this file inside the annotation folder with the name /gencode.v24.protein.coding.non.redundant.TSS.bed. Following this line of code we'll conduct intersection analyses for both tissues. We'll extract the first two columns from the data, where the first column represents the filename and the second column represents the tissue. These values will be used to calculate the intersection and the results will be stored in a text file with the tissue name.
+To obtain the number of peaks the command wc -l will be used too.
+```bash
+ cut -f-2 analyses/bigBed.peaks.ids.txt | while read filename tissue; do bedtools intersect -a data/bed.files/"$filename".bed -b annotation/gencode.v24.protein.coding.non.redundant.TSS.bed -u | sort -u > analyses/peaks.analyses/ATACpeaks.within.promoters."$tissue".txt; done
+root@97de1c55167d:/home/micalball/epigenomics/epigenomics_uvic/ATAC-seq# wc -l analyses/peaks.analyses/*.txt
+  47871 analyses/peaks.analyses/ATACpeaks.within.promoters.sigmoid_colon.txt
+  44749 analyses/peaks.analyses/ATACpeaks.within.promoters.stomach.txt
+  92620 total
+```
+
+
 
 
 
 ```bash
 
 ```
+```bash
 
+```
 
 
 ```bash
 
 ```
+```bash
+
+```
+
 
 
