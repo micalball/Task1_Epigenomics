@@ -51,13 +51,22 @@ The information needed is located in column 1 (file accession), for tissue colum
 This command sequence filters lines from the file metadata.tsv based on specific criteria, processes and formats the output using awk, sorts it, and then writes the result to a file named bigBed.peaks.ids.txt in the analyses directory.
 ```bash
 grep -F "bigBed_narrowPeak" metadata.tsv | grep -F "pseudoreplicated_peaks" | grep -F "GRCh38" | awk 'BEGIN{FS=OFS="\t"}{print $1, $11, $23}' | sort -k2,2 -k1,1r | sort -k2,2 -u > analyses/bigBed.peaks.ids.txt
+cat analyses/bigBed.peaks.ids.txt
 ENCFF287UHP     sigmoid_colon
 ENCFF762IFP     stomach
-```
-When downloading files, it's always advisable to check their integrity by verifying their MD5 hash, a sort of digital fingerprint of the file. MD5 hashes can be computed with the command md5sum, so our command line will be this:
-```bash
 
+cut -f1 analyses/bigBed.peaks.ids.txt | while read filename; do wget -P data/bigBed.files "https://www.encodeproject.org/files/$filename/@@download/$filename.bigBed"; done
+ls data/bigBed.files
+ENCFF287UHP.bigBed  ENCFF762IFP.bigBed  md5sum.txt
 ```
+When downloading files, it's always advisable to check their integrity by verifying their MD5 hash, a sort of digital fingerprint of the file. MD5 hashes can be computed with the command md5sum, so this command performs an integrity check on a set of files. It compares the original MD5 sums stored in metadata.tsv with the computed MD5 sums of the corresponding files and reports any discrepancies.
+
+```bash
+file_type="bigBed"; ../bin/selectRows.sh <(cut -f1 analyses/"$file_type".*.ids.txt) metadata.tsv | cut -f1,46 > data/"$file_type".files/md5sum.txt; cat data/"$file_type".files/md5sum.txt | while read filename original_md5sum; do md5sum data/"$file_type".files/"$filename"."$file_type" | awk -v filename="$filename" -v original_md5sum="$original_md5sum" 'BEGIN{FS=" "; OFS="\t"}{print filename, original_md5sum, $1}'; done > tmp; mv tmp data/"$file_type".files/md5sum.txt; awk '$2 != $3' data/"$file_type".files/md5sum.txt
+```
+Since no output was obtained we can conclude that the are no differences between the files, they have a correct integrity and are verified.
+
+
 
 
 ```bash
