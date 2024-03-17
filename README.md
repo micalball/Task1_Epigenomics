@@ -109,18 +109,40 @@ In this case, we found 71572 peaks outside gene coordinates with 34537 for stoma
 
 ## TASK 5
 
+### Task 1
+Create a folder regulatory_elements inside epigenomics_uvic. This will be the folder where you store all your subsequent results.
 
 ```bash
-
+cd ../epigenomics_uvic
+mkdir regulatory_elements
+mkdir data
+mkdir data/tsv.files
+mkdir data/bed.files
+mkdir data/bigBed.files
+mkdir data/bigWig.files
+mkdir analyses
+mkdir analyses/peaks.analyses
+mkdir annotation
 ```
 
+### Task 2
+Distal regulatory regions are usually found to be flanked by both H3K27ac and H3K4me1. From your starting catalogue of open regions in each tissue, select those that overlap peaks of H3K27ac AND H3K4me1 in the corresponding tissue. You will get a list of candidate distal regulatory elements for each tissue. How many are they?
+
+For H3K27ac
+```bash
+grep -F H3K27ac ../ATAC-seq/metadata.tsv|grep -F "bigBed_narrowPeak"|grep -F "pseudoreplicated_peaks" |grep -F "GRCh38" |awk 'BEGIN{FS=OFS="\t"}{print $1, $11, $23}' |sort -k2,2 -k1,1r |sort -k2,2 -u > analyses/H3K27ac.bigBed.peaks.ids.txt && cut -f1 analyses/H3K27ac.bigBed.peaks.ids.txt |while read filename; do wget -P data/bigBed.files "https://www.encodeproject.org/files/$filename/@@download/$filename.bigBed"; done
+```
+
+For H3K4me1
+```bash
+grep -F H3K4me1 ../ATAC-seq/metadata.tsv|grep -F "bigBed_narrowPeak"|grep -F "pseudoreplicated_peaks" |grep -F "GRCh38" |awk 'BEGIN{FS=OFS="\t"}{print $1, $11, $23}' |sort -k2,2 -k1,1r |sort -k2,2 -u > analyses/H3K4me1.bigBed.peaks.ids.txt && cut -f1 analyses/H3K4me1.bigBed.peaks.ids.txt |while read filename; do wget -P data/bigBed.files "https://www.encodeproject.org/files/$filename/@@download/$filename.bigBed"; done
+```
+
+Now we will perform the check as in Task 4
 
 ```bash
-
+for file_type in bigBed; do ../bin/selectRows.sh <(cut -f1 analyses/*"$file_type".peaks.ids.txt) ../ChIP-seq/metadata.tsv | cut -f1,46 > data/"$file_type".files/md5sum.txt && cat data/"$file_type".files/md5sum.txt | while read filename original_md5sum; do md5sum data/"$file_type".files/"$filename"."$file_type" | awk -v filename="$filename" -v original_md5sum="$original_md5sum" 'BEGIN{FS=" "; OFS="\t"}{print filename, original_md5sum, $1}' ; done > tmp && mv tmp data/"$file_type".files/md5sum.txt && awk '$2!=$3' data/"$file_type".files/md5sum.txt ; done
 ```
-```bash
-
-```
-
+No results received so there are no differences.
 
 
