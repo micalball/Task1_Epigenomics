@@ -143,6 +143,73 @@ Now we will perform the check as in Task 4
 ```bash
 for file_type in bigBed; do ../bin/selectRows.sh <(cut -f1 analyses/*"$file_type".peaks.ids.txt) ../ChIP-seq/metadata.tsv | cut -f1,46 > data/"$file_type".files/md5sum.txt && cat data/"$file_type".files/md5sum.txt | while read filename original_md5sum; do md5sum data/"$file_type".files/"$filename"."$file_type" | awk -v filename="$filename" -v original_md5sum="$original_md5sum" 'BEGIN{FS=" "; OFS="\t"}{print filename, original_md5sum, $1}' ; done > tmp && mv tmp data/"$file_type".files/md5sum.txt && awk '$2!=$3' data/"$file_type".files/md5sum.txt ; done
 ```
-No results received so there are no differences.
+No results received so there are no differences. On the other hand, the list of candidate distal regulatory elements is the following:
+```bash
+cat data/bigBed.files/md5sum.txt
+ENCFF977LBD     be29636550527e36c4755ea036531e75        be29636550527e36c4755ea036531e75
+ENCFF844XRN     de679228721fb4055aa1f657c77c21a6        de679228721fb4055aa1f657c77c21a6
+ENCFF724ZOF     c87fefbf41de3d291fa1d340a26627f5        c87fefbf41de3d291fa1d340a26627f5
+ENCFF872UHN     2207b7b3378df7776e7ecdc2aa1a5de0        2207b7b3378df7776e7ecdc2aa1a5de0
+```
+No it's time to convert our bigBed files to Bed, using the bigBedToBed function. We will apply it to H3K27ac and then H3K4me1.
+
+```bash
+cut -f1 analyses/H3K27ac.bigBed.peaks.ids.txt|\
+while read filename; do
+        bigBedToBed data/bigBed.files/"$filename".bigBed data/bed.files/"$filename".bed
+done
+```
+
+```bash
+cut -f1 analyses/H3K4me1.bigBed.peaks.ids.txt|\
+while read filename; do
+        bigBedToBed data/bigBed.files/"$filename".bigBed data/bed.files/"$filename".bed
+done
+```
+
+The next step is to find intersects of H3K4me1 and H3K27ac where distal reguylatory regions overlap. We will use bedtools intersect function for that.
+
+```bash
+root@8e1b947ec41c:/home/micalball/epigenomics/epigenomics_uvic/regulatory_elements# cut -f-2 analyses/H3K4me1.bigBed.peaks.ids.txt | while read filename tissue; do bedtools intersect -a data/bed.files/"$filename".bed -b ../ATAC-seq/analyses/peaks.analyses/ATACpeaks.outside.gene."$tissue".bed -u > analyses/peaks.analyses/"$tissue".H3K27ac.outside.bed; done
+```
+```bash
+cut -f-2 analyses/H3K27ac.bigBed.peaks.ids.txt | while read filename tissue; do bedtools intersect -a data/bed.files/"$filename".bed -b ../ATAC-seq/analyses/peaks.analyses/ATACpeaks.outside.gene."$tissue".bed -u > analyses/peaks.analyses/"$tissue".H3K27ac.outside.bed; done
+```
+Now check if our files have been succesfully created:
+```bash
+ls analyses/peaks.analyses
+sigmoid_colon.H3K27ac.outside.bed  sigmoid_colon.H3K4me1.outside.bed  stomach.H3K27ac.outside.bed  stomach.H3K4me1.outside.bed
+```
+An find the intersect for each tissue:
+```bash
+for tissue in stomach sigmoid_colon; do cut -f-2 analyses/H3K27ac.bigBed.peaks.ids.txt | while read filename; do bedtools intersect -a analyses/peaks.analyses/"$tissue".H3K27ac.outside.bed -b analyses/peaks.analyses/"$tissue".H3K4me1.outside.bed -u > analyses/peaks.analyses/overlap."$tissue".bed; done; done
+```
+Lastly, we count the peaks inside the files created.
+
+```bash
+wc -l analyses/peaks.analyses/overlap*.bed
+  7367 analyses/peaks.analyses/overlap.sigmoid_colon.bed
+  4342 analyses/peaks.analyses/overlap.stomach.bed
+ 11709 total
+```
+
+### Task 3
+Focus on regulatory elements that are located on chromosome 1 (hint: to parse a file based on the value of a specific column, have a look at what we did here), and generate a file  regulatory.elements.starts.tsv that contains the name of the regulatory region (i.e. the name of the original ATAC-seq peak) and the start (5') coordinate of the region.
+We will use the two files created in the last step of the previous task. A filter for the desired columns containing the crucial information is used and results are stored in a new file called chr1.regulatory_elements.starts.tsv
+
+```bash
+for tissue in sigmoid_colon stomach; do
+  awk 'BEGIN{FS=OFS="\t"} $1=="chr1" {print $4,$2}' analyses/peaks.analyses/overlap."$tissue".bed > analyses/peaks.analyses/chr1.regulatory_elements.starts.tsv
+done
+```
+Now we count:
+```bash
+wc -l analyses/peaks.analyses/*.tsv
+528 analyses/peaks.analyses/chr1.regulatory_elements.starts.tsv
+```
+
+### Task 4
+
+
 
 
