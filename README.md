@@ -209,7 +209,40 @@ wc -l analyses/peaks.analyses/*.tsv
 ```
 
 ### Task 4
+Focus on protein-coding genes located on chromosome 1. From the BED file of gene body coordinates that you generated here, prepare a tab-separated file called gene.starts.tsv which will store the name of the gene in the first column, and the start coordinate of the gene on the second column (REMEMBER: for genes located on the minus strand, the start coordinate will be at the 3').
+Using the provided line, we created the file.
+
+```bash
+awk 'BEGIN{FS=OFS="\t"} $1=="chr1" {if ($6=="+"){start=$2} else {start=$3}; print $4, start}' ../ATAC-seq/annotation/gencode.v24.protein.coding.gene.body.bed > analyses/gene.starts.tsv
+```
+Now use wc -l to obtain the number of genes.
+```bash
+wc -l analyses/gene.starts.tsv
+2047 analyses/gene.starts.tsv
+```
+
+### Task 5
+Download or copy this python script inside the epigenomics_uvic/bin folder. Have a look at the help page of this script to understand how it works:
+
+```bash
+
+```
+
+```bash
+
+```
+
+```bash
+
+```
+
+### Task 6
+For each regulatory element contained in the file regulatory.elements.starts.tsv, retrieve the closest gene and the distance to the closest gene using the python script you created above. Use the command below as a starting point:
 
 
+
+
+### Task 7
+Use R to compute the mean and the median of the distances stored in regulatoryElements.genes.distances.tsv.
 
 
