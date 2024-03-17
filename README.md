@@ -224,25 +224,35 @@ wc -l analyses/gene.starts.tsv
 ### Task 5
 Download or copy this python script inside the epigenomics_uvic/bin folder. Have a look at the help page of this script to understand how it works:
 
+A new file called get.distance.py in epigenomics_uvic is created with the provided script:
 ```bash
-
+nano ../bin/get.distance.py
 ```
 
 ```bash
-
+root@8e1b947ec41c:/home/micalball/epigenomics/epigenomics_uvic/regulatory_elements# python ../bin/get.distance.py --input analyses/gene.starts.tsv --start 980000
+ENSG00000187642.9       982093  2093
 ```
 
-```bash
+We get the expected result!
 
-```
 
 ### Task 6
 For each regulatory element contained in the file regulatory.elements.starts.tsv, retrieve the closest gene and the distance to the closest gene using the python script you created above. Use the command below as a starting point:
 
+```bash
+for tissue in stomach sigmoid_colon; do   cat analyses/peaks.analyses/chr1.regulatory_elements.starts.tsv |   while read element start; do     python ../bin/get.distance.py --input analyses/gene.starts.tsv --start "$start";   done > analyses/peaks.analyses/"$tissue".gene_distances.tsv; done
+```
 
-
+```bash
+head -n 1 analyses/peaks.analyses/stomach.gene_distances.tsv
+ENSG00000237330.2       1074307 6841
+```
 
 ### Task 7
 Use R to compute the mean and the median of the distances stored in regulatoryElements.genes.distances.tsv.
 
+```bash
+
+```
 
